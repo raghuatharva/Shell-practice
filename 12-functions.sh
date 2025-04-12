@@ -28,7 +28,15 @@ if [ $? -ne 0 ]
 then
     echo "Git is not installed, going to install it.."
     dnf install git -y
-    VALIDATE $? "Installing Git"
+    VALIDATE $? "Installing Git" # this function just replaced the below code. no nuclear physics here
+#    if [ $? -ne 0 ]
+#     then
+#         echo " installing git is...FAILED"
+#         exit 1
+#     else
+#         echo "installing git is...SUCCESS"
+#     fi
+
 else
     echo "Git is already installed, nothing to do.."
 fi
@@ -40,6 +48,13 @@ then
     echo "MySQL is not installed...going to install"
     dnf install mysql -y
     VALIDATE $? "Installing MySQL"
+    #    if [ $? -ne 0 ]
+    #     then
+    #         echo " installing mysql is...FAILED"
+    #         exit 1
+    #     else
+    #         echo "installing mysql is...SUCCESS"
+    #     fi
 else
     echo "MySQL is already installed..nothing to do"
 fi

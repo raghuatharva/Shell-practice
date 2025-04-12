@@ -1,3 +1,5 @@
+# datatype no so important
+
 #!/bin/bash
 
 NUMBER1=$1

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 USERID=$(id -u)
-#echo "User ID is: $USERID"
+echo "User ID is: $USERID"
 
 if [ $USERID -ne 0 ]
 then
@@ -25,6 +25,8 @@ then
 else
     echo "Git is already installed, nothing to do.."
 fi
+
+# Check for MySQL installation
 
 dnf list installed mysql 
 

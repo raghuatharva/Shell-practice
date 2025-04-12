@@ -1,9 +1,9 @@
 #!/bin/bash
 
 USERID=$(id -u)
-R="\e[31m"
-G="\e[32m"
-N="\e[0m"
+R="\e[31m"          # Red
+G="\e[32m"          # Green
+N="\e[0m"           # Normal color
 
 CHECK_ROOT(){
     if [ $USERID -ne 0 ]
