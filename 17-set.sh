@@ -1,13 +1,5 @@
 #!/bin/bash
 
-set -e # setting the automatic exit, if we get error, set -ex for debug
+set -e # if we get error, script will automatically exit if any command fails. 
+set -ex for debug --> more verbose
 
-failure(){
-    echo "Failed at: $1:$2"
-}
-
-trap 'failure "${LINENO}" "$BASH_COMMAND"' ERR # ERR is the error signal
-
-echo "Hello World success"
-echooooo "Hello Wolrd failure"
-echo "Hello World after failure"
