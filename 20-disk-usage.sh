@@ -11,7 +11,8 @@
 # overlay        overlay   50G   35G   12G  75% /var/lib/docker/overlay2
 
 # to select the 6th column which has the value of % and to remove the % sign
-# df -hT | grep ext4 awk '{print $6}' | cut -d "%" -f1
+# df -hT | grep ext4 | awk -F " " '{print $6}' | cut -d "%" -f1
+#here columns are separated by space so we use -F " "
 #output: 
 # 66
 # 64
@@ -30,21 +31,21 @@
 
 #in companies we use xfs filesystem, so we will use xfs in the script
 
-#!/bin/bash
-
-DISK_USAGE=$(df -hT | grep xfs)
-DISK_THRESHOLD=5 #real projects, it is usually 75
-
 #DISK_USAGE=$(df -hT | grep xfs) this sends overall data of all xfs disks . around 6-10 lines of data ; 
 #complete data we are giving to while loop and it will read line by line and that line will
 # be assigned to line variable. $USAGE will have percentage of that line and if that is greater than Disk thrashold
 # it will print the partition name and usage and we design to send emails to the concerned team 
 #via Jenkins or Prometheus or Grafana
 
-while IFS= read -r line #IFS,internal field seperatpor, empty it will ignore while space.-r is for not to ingore special charecters like /
+#!/bin/bash
+
+DISK_USAGE=$(df -hT | grep xfs)
+DISK_THRESHOLD=75 #real projects
+
+while IFS="" read -r disk 
 do
-    USAGE=$(echo $line | awk -F " " '{print $6F}' | cut -d "%" -f1) #f1 means first column removing % ; -d means delimiter which is % here
-    PARTITION=$(echo $line | awk -F " " '{print $NF}') #partition means / or /mnt/backup or /var etc. ; $NF means last column of the line
+    USAGE=$(echo $disk | awk -F " " '{print $6}' | cut -d "%" -f1) #f1 means first column removing % ; -d means delimiter which is % here
+    PARTITION=$(echo $disk | awk -F " " '{print $NF}')
     if [ $USAGE -ge $DISK_THRESHOLD ]
     then
         echo "$PARTITION is more than $DISK_THRESHOLD percent, current value: $USAGE percent. Please check"
@@ -53,3 +54,4 @@ do
         echo "$PARTITION is less than $DISK_THRESHOLD, current value: $USAGE. No action required"
     fi
 done <<< $DISK_USAGE
+

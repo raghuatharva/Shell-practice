@@ -1,11 +1,3 @@
-#Remember
-# 1. You will be writing the script. You are not writing a script for yourself. You are writing a script for someone else to use.
-#  But in real world, the source dir, destination dir, and retention days will either be:
-
-# Given by the Dev/Infra team (via JIRA ticket or documentation)
-# Standardized paths used across projects (like /var/logs/app1/ or /opt/backups/)
-# Sometimes, you decide the defaults, and the script takes override values from CLI arguments or a config file
-
 #Real-World Flow – How It Works in Companies:
 
 # Use Case: Application logs, build artifacts, or DB exports are filling up disk in a server
@@ -17,6 +9,14 @@
 # Add error handling (check if dir exists, check permissions, etc.)
 # Use find, zip, mv, rm
 # Schedule via cron
+
+#Remember
+# 1. You will be writing the script. You are not writing a script for yourself. You are writing a script for someone else to use.
+#  But in real world, the source dir, destination dir, and retention days will either be:
+
+# Given by the Dev/Infra team (via JIRA ticket or documentation)
+# Standardized paths used across projects (like /var/logs/app1/ or /opt/backups/)
+# Sometimes, you decide the defaults paths, and the script takes override values from CLI arguments or a config file
 
 #################################################################################################################
 # Algorithm: What the script is doing:
@@ -38,31 +38,39 @@
 # flag -z means --> check if the file is empty or not; if the file is empty, it will return 0; if the file is not empty, it will return 1
 
 #################################################################################################################
-#Understanding IFS in while loop:
+#Understanding IFS in while loop: [ check notion for further understanding ]
 
-#IFS is a special variable in bash that defines the character(s) used to split input into fields. By default, IFS is set to whitespace (space, tab, newline).
-# This means that when you read input using the read command, it will split the input into fields based on whitespace characters. For example, if you have a string "file1 file2 file3", it will be split into three fields: "file1", "file2", and "file3".
-
-# for example: 
-# if IFS is set to a space, then the input "file1 file2 file3" will be split into three fields: "file1", "file2", and "file3". To set IFS to a space, you can use the following command:
-# IFS=' ' read -r field1 field2 field3 <<< "file1 file2 file3"
-
-# if IFS is set to a comma, then the input "file1,file2,file3" will be split into three fields: "file1", "file2", and "file3". to set IFS to a comma, you can use the following command:
-# IFS=',' read -r field1 field2 field3 <<< "file1,file2,file3"
-
-# in our script IFS is set to empty --> IFS="" --> it doesn’t mean it won’t split anything.
-# → It means don’t split on any characters in the filepath(var/logs/mysql.log), treat the entire line as-is.
-# ✅ This is perfect when $FILES contains one file path per line. While loop deletes line after line:
-
+#IFS - INternal field separator ; if all the logs are separated by , we use IFS="," 
+#if all the logs are separated by plus "+"", we use IFS="+" 
+#if all the logs are separated by no space at all , then we use IFS="" --> empty  
 
 # The -r option in the read command prevents backslashes from being interpreted as escape characters. This is useful when reading file paths that may contain backslashes.
 # The <<< operator is called a "here string" and allows you to pass a string as input to a command. In this case, it passes the value of $FILES to the while loop.
+
+#################################################################################################################
+# Understanding where zipped files is created:
+# Through this command
+# ZIP_FILE="$DEST_DIR/app-logs-$TIMESTAMP.zip" 
+# find ${SOURCE_DIR} -name "*.log" -mtime +$DAYS | zip "$ZIP_FILE" -@   
+
+# You're telling zip:
+
+# “Hey, zip this list of .log files (found inside SOURCE_DIR)And save the archive as $ZIP_FILE…”
+
+# 👉 So where does zip create the archive?
+# Answer: It creates the archive exactly where $ZIP_FILE points to.
+
+# ✅ Even though you're running the command from somewhere else (say /home/rohan/backup_scripts),
+# if $ZIP_FILE=/tmp/mylogs.zip, the ZIP file will be created inside /tmp/, not the current directory.
+#################################################################################################################
+
 
 #!/bin/bash
 SOURCE_DIR=$1
 DEST_DIR=${2}
 DAYS=${3:-14} #if $3 is empty, default is 14 days.
 TIMESTAMP=$(date +%Y-%m-%d-%H-%M-%S)
+FILES=$(find ${SOURCE_DIR} -name "*.log" -mtime +$DAYS)
 
 R="\e[31m"
 G="\e[32m"
@@ -84,16 +92,15 @@ fi
 if [ ! -d $SOURCE_DIR ] 
 then
     echo "$SOURCE_DIR does not exist...Please check"
+    exit 1
 fi
 
 if [ ! -d $DEST_DIR ]
 then
     echo "$DEST_DIR does not exist...Please check"
+    exit 1
 fi
 
-FILES=$(find ${SOURCE_DIR} -name "*.log" -mtime +$DAYS)
-
-echo "Files: $FILES"
 
 if [ ! -z $FILES ] 
 # here z means zero files are there ; if not z means(!), files are there which are greater than zero;
@@ -108,7 +115,7 @@ then
     then
         echo "Successfully zippped files older than $DAYS"
         #remove the files after zipping
-        while IFS= read -r file #IFS,internal field seperator, empty it will ignore white space.-r is for not to ingore special charecters like /
+        while IFS="" read -r file 
         do
             echo "Deleting file: $file"
             rm -rf $file
